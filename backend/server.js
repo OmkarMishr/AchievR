@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -9,7 +10,6 @@ const db = require('./config/mongoose-connection');
 const authRouter = require('./routes/authRouter');
 const expressSession = require('express-session');
 const flash = require('connect-flash');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,7 +42,7 @@ app.use(expressSession({
     secret: process.env.EXPRESS_SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
-    cookie: { 
+    cookie: {
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
         httpOnly: true, // Prevent client-side access
         sameSite: 'strict' // CSRF protection
@@ -65,9 +65,9 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
     const status = err.status || 500;
     const message = err.message || 'Internal Server Error';
-    
+
     console.error(`[${new Date().toISOString()}] Error:`, message);
-    
+
     res.status(status).json({
         success: false,
         message: process.env.NODE_ENV === 'production' ? 'An error occurred' : message,
@@ -79,3 +79,4 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
 });
+console.log(process.env.DEBUG);
