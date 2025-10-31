@@ -6,4 +6,18 @@ module.exports.isLoggedIn = async (req, res, next) => {
         req.flash("error",'you need to login first');
         return res.redirect('/signup');
     }
+
+    try {
+    let decoded = jwt.verify(req.cookies.token, process.env.JWT_KEY);
+    req.user = await userModel
+    .findOne({email: decoded.email})
+    .select('-password');
+
+    next();
+    } 
+    catch (error) {
+        req.flash("error", 'Invalid token');
+        return res.redirect('/signup');
+    }
 };
+
