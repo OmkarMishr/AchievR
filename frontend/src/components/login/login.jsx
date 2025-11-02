@@ -2,7 +2,7 @@ import React from 'react';
 
 const Login = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-900 via-blue-600 to-blue-300 px-2">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-red from-purple-900 via-blue-600 to-blue-300 px-2">
       <div className="bg-white p-6 sm:p-10 rounded-xl shadow-lg w-full max-w-md flex flex-col items-center">
         <h1 className="text-3xl sm:text-4xl font-bold text-purple-800 mb-1 text-center">
           AchievR
