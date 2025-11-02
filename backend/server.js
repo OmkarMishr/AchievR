@@ -1,82 +1,65 @@
-require('dotenv').config();
 const express = require('express');
-const helmet = require('helmet');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const cookieParser = require('cookie-parser');
 const path = require('path');
-const compression = require('compression');
-const morgan = require('morgan');
-const db = require('./config/mongoose-connection');
-const authRouter = require('./routes/authRouter');
-const expressSession = require('express-session');
-const flash = require('connect-flash');
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Security middleware
-app.use(helmet()); // Set HTTP security headers
+// ===== 1. GLOBAL MIDDLEWARE (MUST BE FIRST) =====
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Logging
-app.use(morgan('combined')); // Log HTTP requests
+// ===== 2. IMPORT MIDDLEWARE =====
+const authMiddleware = require('./middleware/auth');
 
-// Compression
-app.use(compression()); // Compress responses
-
-// CORS configuration
-const corsOptions = {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-};
-app.use(cors(corsOptions));
-
-// Body parser middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-// Session configuration
-app.use(expressSession({
-    secret: process.env.EXPRESS_SESSION_SECRET || 'your-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-        httpOnly: true, // Prevent client-side access
-        sameSite: 'strict' // CSRF protection
-    }
-}));
-app.use(flash());
-
-// Routes
-app.use('/api/auth', authRouter);
-app.get('/', (req, res) => {
-    res.status(200).json({ message: 'Student Activity Platform API' });
+// ===== 3. DATABASE CONNECTION =====
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('✅ MongoDB Connected'))
+.catch(err => {
+  console.error('❌ DB Connection Error:', err);
+  process.exit(1); // Exit if DB fails
 });
 
-// 404 handler
+// ===== 4. ROUTES (PUBLIC FIRST, THEN PROTECTED) =====
+// Public routes (no auth required)
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/verify', require('./routes/verify')); // QR verification can be public
+
+// Protected routes (auth required)
+app.use('/api/activities', authMiddleware, require('./routes/activities'));
+app.use('/api/certificates', authMiddleware, require('./routes/certificates'));
+app.use('/api/recruiter', authMiddleware, require('./routes/recruiter'));
+
+// Health check
+app.get('/health', (req, res) => res.json({ status: 'OK' }));
+
+// ===== 5. 404 HANDLER (BEFORE ERROR HANDLER) =====
 app.use((req, res) => {
-    res.status(404).json({ success: false, message: 'Route not found' });
+  res.status(404).json({ error: '❌ Route not found' });
 });
 
-// Global error handling middleware
+// ===== 6. ERROR HANDLING MIDDLEWARE (MUST BE LAST) =====
+// CRITICAL: 4 parameters (err, req, res, next) for Express to recognize as error handler
 app.use((err, req, res, next) => {
-    const status = err.status || 500;
-    const message = err.message || 'Internal Server Error';
-
-    console.error(`[${new Date().toISOString()}] Error:`, message);
-
-    res.status(status).json({
-        success: false,
-        message: process.env.NODE_ENV === 'production' ? 'An error occurred' : message,
-        ...(process.env.NODE_ENV !== 'production' && { error: err })
-    });
+  console.error('❌ Error:', err);
+  
+  // Determine status code
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
+  
+  res.status(status).json({ 
+    error: message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
 });
 
-// Server startup
+// ===== 7. START SERVER =====
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
-console.log(process.env.DEBUG);

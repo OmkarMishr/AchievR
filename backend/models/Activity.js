@@ -4,7 +4,6 @@ const activitySchema = new mongoose.Schema({
   student: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   activityId: { type: String, unique: true },
   
-  // Basic Info
   title: { type: String, required: true },
   description: { type: String, required: true },
   category: {
@@ -13,42 +12,43 @@ const activitySchema = new mongoose.Schema({
     required: true
   },
   
-  // Details
   organizingBody: String,
   achievementLevel: {
     type: String,
     enum: ['College', 'University', 'State', 'National', 'International']
   },
   eventDate: { type: Date, required: true },
-  duration: Number, // in days
   
-  // File uploads
   proofDocuments: [{
     filename: String,
     url: String,
     uploadedAt: Date
   }],
   
-  // AI Extracted Data
-  extractedSkills: [String],
-  aiConfidenceScore: Number,
-  aiSummary: String,
+  // Manual Skills Selection
+  selectedTechnicalSkills: [String],
+  selectedSoftSkills: [String],
+  selectedTools: [String],
   
-  // Approval Workflow
+  // Fraud Detection
+  fraudDetectionId: { type: mongoose.Schema.Types.ObjectId, ref: 'FraudDetection' },
+  fraudStatus: {
+    type: String,
+    enum: ['not_scanned', 'flagged', 'approved_by_ai', 'manual_override'],
+    default: 'not_scanned'
+  },
+  
   status: {
     type: String,
-    enum: ['draft', 'pending', 'info_requested', 'approved', 'certified', 'rejected'],
+    enum: ['pending', 'approved', 'certified', 'rejected'],
     default: 'pending'
   },
   
   submittedAt: Date,
-  
-  // Faculty Review
   reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   facultyComment: String,
   reviewedAt: Date,
   
-  // Admin Certification
   certifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   certificateHash: String,
   certificateUrl: String,
@@ -60,13 +60,10 @@ const activitySchema = new mongoose.Schema({
   },
   certifiedAt: Date,
   
-  // Rejection/Info Request
-  rejectionReason: String,
-  infoRequested: String,
+  rejectionReason: String
   
 }, { timestamps: true });
 
-// Generate unique activity ID before saving
 activitySchema.pre('save', async function(next) {
   if (!this.activityId) {
     const year = new Date().getFullYear();

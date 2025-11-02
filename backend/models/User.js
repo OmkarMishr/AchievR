@@ -11,32 +11,18 @@ const userSchema = new mongoose.Schema({
     default: 'student'
   },
   
-  // Student-specific fields
+  // Student Fields
   rollNumber: { type: String, unique: true, sparse: true },
   department: String,
   year: Number,
-  batch: String,
   mobile: String,
   dateOfBirth: Date,
-  profilePhoto: String,
-  bloodGroup: String,
-  address: String,
-  interests: [String],
   
-  // Faculty/Admin fields
+  // Faculty/Admin Fields
   employeeId: { type: String, unique: true, sparse: true },
   designation: String,
   
-  // Verification
-  isEmailVerified: { type: Boolean, default: false },
-  emailVerificationToken: String,
-  emailVerificationExpire: Date,
-  resetPasswordToken: String,
-  resetPasswordExpire: Date,
-  
-  // Timestamps
-  createdAt: { type: Date, default: Date.now },
-  lastLogin: Date
+  createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
 // Hash password before saving
