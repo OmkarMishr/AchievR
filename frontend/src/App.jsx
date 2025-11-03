@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import SubmitActivity from './pages/SubmitActivity';
 import PublicVerify from './pages/PublicVerify';
 import Navbar from './components/Navbar';
+import LandingPage from './components/landing.jsx';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -38,12 +39,14 @@ export default function App() {
     <Router>
       {user && <Navbar user={user} setUser={setUser} />}
       <Routes>
+         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login setUser={setUser} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify/:hash" element={<PublicVerify />} />
         
         {user?.role === 'student' && (
           <>
+           
             <Route path="/dashboard" element={<StudentDashboard user={user} />} />
             <Route path="/submit" element={<SubmitActivity user={user} />} />
           </>
