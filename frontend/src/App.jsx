@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import Landing from './pages/Landing'; // ADD THIS
 import Login from './pages/Login';
 import Register from './pages/Register';
 import StudentDashboard from './pages/StudentDashboard';
@@ -8,7 +9,6 @@ import AdminDashboard from './pages/AdminDashboard';
 import SubmitActivity from './pages/SubmitActivity';
 import PublicVerify from './pages/PublicVerify';
 import Navbar from './components/Navbar';
-import LandingPage from './components/landing.jsx';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -39,14 +39,15 @@ export default function App() {
     <Router>
       {user && <Navbar user={user} setUser={setUser} />}
       <Routes>
-         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login setUser={setUser} />} />
-        <Route path="/register" element={<Register />} />
+        {/* Public Routes */}
+        <Route path="/" element={user ? <Navigate to={user.role === 'student' ? '/dashboard' : `/${user.role}`} /> : <Landing />} />
+        <Route path="/login" element={user ? <Navigate to="/" /> : <Login setUser={setUser} />} />
+        <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
         <Route path="/verify/:hash" element={<PublicVerify />} />
         
+        {/* Protected Routes */}
         {user?.role === 'student' && (
           <>
-           
             <Route path="/dashboard" element={<StudentDashboard user={user} />} />
             <Route path="/submit" element={<SubmitActivity user={user} />} />
           </>
@@ -55,7 +56,7 @@ export default function App() {
         {user?.role === 'faculty' && <Route path="/faculty" element={<FacultyDashboard user={user} />} />}
         {user?.role === 'admin' && <Route path="/admin" element={<AdminDashboard user={user} />} />}
         
-        <Route path="/" element={user ? <Navigate to={user.role === 'student' ? '/dashboard' : `/${user.role}`} /> : <Navigate to="/login" />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
   );
